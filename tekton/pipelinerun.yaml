@@ -13,8 +13,8 @@ spec:
     - name: pipeline-workspace
       volumeClaimTemplate:
         spec:
-          accessModes: [ReadWriteOnce]
+          storageClassName: skills-network-learner
+          accessModes: [ReadWriteMany]
           resources:
             requests:
               storage: 1Gi
-
