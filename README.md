@@ -40,4 +40,3 @@ kubectl rollout status deployment/accounts
 Provide the PostgreSQL Secret described in `deploy/README.md` first. The runtime user is non-root. The ingress supplies TLS; local HTTP is supported on port 8080.
 
 See `tekton/README.md` for the pipeline setup and execution. Evidence files are kept separately in `evidence/`; screenshots and run logs must come from real executions. Configuration presence alone does not prove deployment success.
-
