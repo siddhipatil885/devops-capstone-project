@@ -3,6 +3,8 @@
 The lab must provide Tekton/OpenShift Pipelines, the buildah ClusterTask, registry access for the pipeline service account, and the accounts-db Secret. Configure a registry namespace you own in the PipelineRun. Give the pipeline service account the namespace edit role for deployment. Buildah uses the repo subdirectory containing the Dockerfile.
 
 ```sh
+ibmcloud cr login
+kubectl create secret generic capstone-registry --type=kubernetes.io/dockerconfigjson --from-file=.dockerconfigjson="$HOME/.docker/config.json"
 oc policy add-role-to-user edit system:serviceaccount:$(oc project -q):pipeline
 kubectl apply -f tekton/tasks.yaml -f tekton/pipeline.yaml
 kubectl create -f tekton/pipelinerun.yaml

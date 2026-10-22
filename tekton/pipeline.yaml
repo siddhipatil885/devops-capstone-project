@@ -5,6 +5,7 @@ metadata:
 spec:
   workspaces:
     - name: pipeline-workspace
+    - name: registry-credentials
   params:
     - name: repo-url
       default: https://github.com/siddhipatil885/devops-capstone-project
@@ -53,6 +54,8 @@ spec:
       workspaces:
         - name: source
           workspace: pipeline-workspace
+        - name: dockerconfig
+          workspace: registry-credentials
     - name: deploy
       runAfter: [build-image]
       taskRef:
@@ -63,5 +66,3 @@ spec:
       workspaces:
         - name: source
           workspace: pipeline-workspace
-
-
