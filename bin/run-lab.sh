@@ -21,6 +21,7 @@ capture rest-update-done curl -sS -i -X PUT -H 'Content-Type: application/json' 
 capture rest-delete-done curl -sS -i -X DELETE http://localhost:8080/accounts/1
 docker images --filter "reference=$IMAGE" | tee evidence/kube-images
 ibmcloud cr login
+kubectl create secret generic capstone-registry --type=kubernetes.io/dockerconfigjson --from-file=.dockerconfigjson="$HOME/.docker/config.json" --dry-run=client -o yaml | kubectl apply -f -
 docker push "$IMAGE" 2>&1 | tee evidence/docker-push.txt
 if ! oc get service postgresql >/dev/null 2>&1; then
   oc new-app --template=postgresql-ephemeral --param=DATABASE_SERVICE_NAME=postgresql --param=POSTGRESQL_USER=postgres --param=POSTGRESQL_PASSWORD=postgres --param=POSTGRESQL_DATABASE=postgres
