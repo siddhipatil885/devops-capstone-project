@@ -1,0 +1,90 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: capstone-clone
+spec:
+  params:
+    - name: url
+    - name: revision
+  workspaces:
+    - name: source
+  steps:
+    - name: clone
+      image: alpine/git:2.47.2
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: REPO_URL
+          value: $(params.url)
+        - name: REVISION
+          value: $(params.revision)
+      script: |
+        #!/bin/sh
+        set -eu
+        git clone --depth 1 --branch "$REVISION" "$REPO_URL" repo
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: capstone-lint
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: lint
+      image: python:3.9-slim
+      workingDir: $(workspaces.source.path)/repo
+      script: |
+        #!/bin/sh
+        set -eu
+        export HOME=/tmp
+        python -m venv /tmp/venv
+        /tmp/venv/bin/pip install -r requirements.txt
+        /tmp/venv/bin/flake8 service tests
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: capstone-test
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: tests
+      image: python:3.9-slim
+      workingDir: $(workspaces.source.path)/repo
+      env:
+        - name: DATABASE_URI
+          value: sqlite:////tmp/accounts-tests.db
+      script: |
+        #!/bin/sh
+        set -eu
+        export HOME=/tmp
+        python -m venv /tmp/venv
+        /tmp/venv/bin/pip install -r requirements.txt
+        /tmp/venv/bin/nosetests -v --with-spec --spec-color
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: capstone-deploy
+spec:
+  params:
+    - name: image
+  workspaces:
+    - name: source
+  steps:
+    - name: deploy
+      image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+      workingDir: $(workspaces.source.path)/repo
+      env:
+        - name: ACCOUNTS_IMAGE
+          value: $(params.image)
+      script: |
+        #!/bin/sh
+        set -eu
+        oc apply -f deploy/
+        oc set image deployment/accounts accounts="$ACCOUNTS_IMAGE"
+        oc rollout restart deployment/accounts
+        oc rollout status deployment/accounts --timeout=180s
+        oc get all -l app=accounts
+

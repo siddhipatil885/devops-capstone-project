@@ -1,0 +1,67 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: cd-pipeline
+spec:
+  workspaces:
+    - name: pipeline-workspace
+  params:
+    - name: repo-url
+      default: https://github.com/siddhipatil885/devops-capstone-project
+    - name: branch
+      default: main
+    - name: image
+      default: us.icr.io/sn-labs-siddhipatil2/accounts:1
+  tasks:
+    - name: clone
+      taskRef:
+        name: capstone-clone
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      params:
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.branch)
+    - name: lint
+      runAfter: [clone]
+      taskRef:
+        name: capstone-lint
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+    - name: tests
+      runAfter: [lint]
+      taskRef:
+        name: capstone-test
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+    - name: build-image
+      runAfter: [tests]
+      taskRef:
+        name: buildah
+        kind: ClusterTask
+      params:
+        - name: IMAGE
+          value: $(params.image)
+        - name: CONTEXT
+          value: repo
+        - name: STORAGE_DRIVER
+          value: vfs
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+    - name: deploy
+      runAfter: [build-image]
+      taskRef:
+        name: capstone-deploy
+      params:
+        - name: image
+          value: $(params.image)
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+
+

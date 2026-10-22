@@ -1,0 +1,10 @@
+.git
+.starter
+.tools
+.python
+.venv*
+evidence
+__pycache__
+*.db
+.coverage
+tests
